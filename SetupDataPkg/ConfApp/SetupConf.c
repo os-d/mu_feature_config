@@ -757,13 +757,14 @@ CreateXmlStringFromCurrentSettings (
 
   Status = mSettingAccess->Get (
                              mSettingAccess,
-                             DFCI_OEM_SETTING_ID__CONF,
+                             DFCI_OEM_SETTING_ID__RUNTIME,
                              &mAuthToken,
                              DFCI_SETTING_TYPE_BINARY,
                              &DataSize,
                              Data,
                              &Flags
                              );
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Unexpected result from getting - %r\n", Status));
     goto EXIT;
