@@ -831,6 +831,17 @@ CreateXmlStringFromCurrentSettings (
       goto EXIT;
     }
 
+    // OSDDEBUG tmp, just to print out
+  mSettingAccess->Get (
+                             mSettingAccess,
+                             DFCI_OEM_SETTING_ID__RUNTIME,
+                             &mAuthToken,
+                             DFCI_SETTING_TYPE_BINARY,
+                             &DataSize,
+                             Data,
+                             &Flags
+                             );
+
     // First encode the binary blob
     EncodedSize = 0;
     Status      = Base64Encode (Data, DataSize, NULL, &EncodedSize);
