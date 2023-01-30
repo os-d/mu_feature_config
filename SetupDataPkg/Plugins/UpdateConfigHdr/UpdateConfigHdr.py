@@ -16,7 +16,7 @@ class UpdateConfigHdr(IUefiBuildPlugin):
 
     # Attempt to run GenCfgData to generate C header files
     #
-    # Consumes build environment variables: "CONF_DATA_STRUCT_FOLDER", "MU_SCHEMA_DIR", and
+    # Consumes build environment variables: "CONF_AUTOGEN_INCLUDE_PATH", "MU_SCHEMA_DIR", and
     # "MU_SCHEMA_FILE_NAME"
     def do_pre_build(self, thebuilder):
         default_generated_path = thebuilder.mws.join(thebuilder.ws, "SetupDataPkg", "Test", "Include")

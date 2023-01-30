@@ -34,6 +34,7 @@
                                   is expected when the config knob has not been updated from the profile default.
   @retval EFI_BUFFER_TOO_SMALL    ConfigKnobDataSize as passed in was too small for this config knob. This is expected
                                   if stale variables exist in flash.
+  @retval EFI_NOT_READY           Variable Services not available.
   @retval !EFI_SUCCESS            Failed to read variable from variable storage.
   @retval EFI_SUCCESS             The operation succeeds.
 
