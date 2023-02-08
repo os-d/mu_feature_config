@@ -33,9 +33,3 @@
   BaseMemoryLib
   DebugLib
   UnitTestLib
-
-  [Guids]
-    gZeroGuid
-
-[Pcd]
-  gSetupDataPkgTokenSpaceGuid.PcdSetupConfigActiveProfileFile
