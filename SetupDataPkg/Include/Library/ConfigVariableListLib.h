@@ -49,7 +49,6 @@ typedef struct {
 } CONFIG_VAR_LIST_HDR;
 #pragma pack(pop)
 
-
 /**
   Find all active configuration variables for this platform.
 
