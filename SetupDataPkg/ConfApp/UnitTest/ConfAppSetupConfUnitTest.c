@@ -877,9 +877,10 @@ ConfAppSetupConfDumpSerialMini (
 
   CONFIG_VAR_LIST_ENTRY  Entry;
   VOID                   *Buffer;
-  UINTN                  BufferSize;
+  UINTN                  BufferSize = 0;
   UINTN                  Offset;
   UINTN                  SizeLeft;
+  UINT32                 TmpSize;
 
   will_return_count (MockClearScreen, EFI_SUCCESS, 2);
   will_return_always (MockSetAttribute, EFI_SUCCESS);
@@ -914,8 +915,15 @@ ConfAppSetupConfDumpSerialMini (
   UT_ASSERT_NOT_EFI_ERROR (Status);
   UT_ASSERT_EQUAL (mSetupConfState, SetupConfDumpSerial);
 
-  BufferSize = VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[2]), mKnown_Good_VarList_DataSizes[2]) +
-               VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[5]), mKnown_Good_VarList_DataSizes[5]);
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[2]), (UINT32)mKnown_Good_VarList_DataSizes[2], &TmpSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  BufferSize += (UINTN)TmpSize;
+
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[5]), (UINT32)mKnown_Good_VarList_DataSizes[5], &TmpSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  BufferSize += (UINTN)TmpSize;
 
   DEBUG ((DEBUG_ERROR, "Here %d %d\n", __LINE__, BufferSize));
   Buffer = AllocatePool (BufferSize);
