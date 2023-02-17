@@ -21,6 +21,7 @@
 #include <PiDxe.h>
 #include <Library/DxeServicesLib.h>
 #include <Library/ConfigVariableListLib.h>
+#include <Library/SafeIntLib.h>
 
 #include <Library/UnitTestLib.h>
 #include <Good_Config_Data.h>
@@ -616,9 +617,13 @@ ConvertVariableListToVariableEntryBadSize (
   UINTN                  Index;
   UINTN                  Size;
   UINTN                  ExpectedSize;
+  UINT32                 VarListSize;
 
   ExpectedSize = sizeof (CONFIG_VAR_LIST_HDR) + mKnown_Good_VarList_DataSizes[0] + StrSize (mKnown_Good_VarList_Names[0]) + sizeof (EFI_GUID) + sizeof (UINT32) + sizeof (UINT32);
-  UT_ASSERT_EQUAL (ExpectedSize, VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]));
+  Status       = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &VarListSize);
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (ExpectedSize, (UINTN)VarListSize);
 
   for (Index = 0; Index < ExpectedSize; Index++) {
     Size   = Index;
@@ -666,15 +671,18 @@ ConvertVariableListToVariableEntryBadCrc (
 {
   CONFIG_VAR_LIST_ENTRY  ConfigVarList;
   EFI_STATUS             Status;
-  UINTN                  ExpectedSize;
+  UINT32                 ExpectedSize;
+  UINTN                  Size;
   UINT8                  *Buffer;
 
-  ExpectedSize = VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]);
-  Buffer       = AllocateCopyPool (ExpectedSize, mKnown_Good_Generic_Profile);
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &ExpectedSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  Size   = (UINTN)ExpectedSize;
+  Buffer = AllocateCopyPool (Size, mKnown_Good_Generic_Profile);
 
-  Buffer[ExpectedSize - 1] = Buffer[ExpectedSize - 1] + 1;
+  Buffer[Size - 1] = Buffer[Size - 1] + 1;
 
-  Status = ConvertVariableListToVariableEntry (Buffer, &ExpectedSize, &ConfigVarList);
+  Status = ConvertVariableListToVariableEntry (Buffer, &Size, &ConfigVarList);
   UT_ASSERT_STATUS_EQUAL (Status, EFI_COMPROMISED_DATA);
 
   FreePool (Buffer);
@@ -745,6 +753,7 @@ ConvertVariableEntryToVariableListNormal (
   CONFIG_VAR_LIST_ENTRY  ConfigVarList;
   EFI_STATUS             Status;
   UINTN                  Size;
+  UINT32                 VarListSize;
   VOID                   *Buffer;
 
   ConfigVarList.Attributes = 3;
@@ -753,11 +762,15 @@ ConvertVariableEntryToVariableListNormal (
   ConfigVarList.DataSize   = mKnown_Good_VarList_DataSizes[0];
   CopyMem (&ConfigVarList.Guid, &mKnown_Good_Yaml_Guid, sizeof (EFI_GUID));
 
-  Size   = VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]);
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  Size   = (UINTN)VarListSize;
   Buffer = AllocatePool (Size);
   Status = ConvertVariableEntryToVariableList (&ConfigVarList, Buffer, &Size);
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (Size, VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]));
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (Size, (UINTN)VarListSize);
 
   // StrLen * 2 as we compare all bytes, not just number of Unicode chars
   UT_ASSERT_MEM_EQUAL (Buffer, mKnown_Good_Generic_Profile, Size);
@@ -791,6 +804,7 @@ ConvertVariableEntryToVariableListBadNameData (
   CONFIG_VAR_LIST_ENTRY  ConfigVarList;
   EFI_STATUS             Status;
   UINTN                  Size;
+  UINT32                 ExpectedSize;
   VOID                   *Buffer;
 
   ConfigVarList.Attributes = 3;
@@ -799,7 +813,9 @@ ConvertVariableEntryToVariableListBadNameData (
   ConfigVarList.DataSize   = mKnown_Good_VarList_DataSizes[0];
   CopyMem (&ConfigVarList.Guid, &mKnown_Good_Yaml_Guid, sizeof (EFI_GUID));
 
-  Size   = VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]);
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &ExpectedSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  Size   = (UINTN)ExpectedSize;
   Buffer = AllocatePool (Size);
 
   ConfigVarList.Name = NULL;
@@ -839,7 +855,7 @@ ConvertVariableEntryToVariableListBadSize (
   CONFIG_VAR_LIST_ENTRY  ConfigVarList;
   EFI_STATUS             Status;
   UINTN                  Size;
-  UINTN                  ExpectedSize;
+  UINT32                 ExpectedSize;
   UINTN                  Index;
   VOID                   *Buffer;
 
@@ -849,7 +865,8 @@ ConvertVariableEntryToVariableListBadSize (
   ConfigVarList.DataSize   = mKnown_Good_VarList_DataSizes[0];
   CopyMem (&ConfigVarList.Guid, &mKnown_Good_Yaml_Guid, sizeof (EFI_GUID));
 
-  ExpectedSize = VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]);
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &ExpectedSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // Intentionally setting it to code, it should not be touched.
   Buffer = (VOID *)ConvertVariableEntryToVariableListBadSize;
@@ -858,7 +875,7 @@ ConvertVariableEntryToVariableListBadSize (
     Size   = Index;
     Status = ConvertVariableEntryToVariableList (&ConfigVarList, Buffer, &Size);
     UT_ASSERT_STATUS_EQUAL (Status, EFI_BUFFER_TOO_SMALL);
-    UT_ASSERT_EQUAL (Size, ExpectedSize);
+    UT_ASSERT_EQUAL (Size, (UINTN)ExpectedSize);
   }
 
   return UNIT_TEST_PASSED;
@@ -932,6 +949,7 @@ VariableEntryLoopBack (
   CONFIG_VAR_LIST_ENTRY  LoopBackConfigVarList;
   EFI_STATUS             Status;
   UINTN                  Size;
+  UINT32                 VarListSize;
   VOID                   *Buffer;
 
   ConfigVarList.Attributes = 3;
@@ -940,14 +958,18 @@ VariableEntryLoopBack (
   ConfigVarList.DataSize   = mKnown_Good_VarList_DataSizes[0];
   CopyMem (&ConfigVarList.Guid, &mKnown_Good_Yaml_Guid, sizeof (EFI_GUID));
 
-  Size   = VAR_LIST_SIZE (StrSize (ConfigVarList.Name), ConfigVarList.DataSize);
+  Status = GetVarListSize ((UINT32)StrSize (ConfigVarList.Name), ConfigVarList.DataSize, &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  Size   = (UINTN)VarListSize;
   Buffer = AllocatePool (Size);
   Status = ConvertVariableEntryToVariableList (&ConfigVarList, Buffer, &Size);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   Status = ConvertVariableListToVariableEntry (Buffer, &Size, &LoopBackConfigVarList);
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (Size, VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]));
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (Size, (UINTN)VarListSize);
 
   UT_ASSERT_EQUAL (ConfigVarList.Attributes, LoopBackConfigVarList.Attributes);
   UT_ASSERT_EQUAL (ConfigVarList.DataSize, LoopBackConfigVarList.DataSize);
@@ -985,6 +1007,7 @@ VariableListLoopBack (
   CONFIG_VAR_LIST_ENTRY  ConfigVarList;
   EFI_STATUS             Status;
   UINTN                  Size;
+  UINT32                 VarListSize;
   VOID                   *Buffer;
 
   Size   = sizeof (mKnown_Good_Generic_Profile);
@@ -994,12 +1017,113 @@ VariableListLoopBack (
   Buffer = AllocatePool (Size);
   Status = ConvertVariableEntryToVariableList (&ConfigVarList, Buffer, &Size);
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (Size, VAR_LIST_SIZE (StrSize (mKnown_Good_VarList_Names[0]), mKnown_Good_VarList_DataSizes[0]));
+  Status = GetVarListSize ((UINT32)StrSize (mKnown_Good_VarList_Names[0]), (UINT32)mKnown_Good_VarList_DataSizes[0], &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (Size, (UINTN)VarListSize);
 
   UT_ASSERT_MEM_EQUAL (mKnown_Good_Generic_Profile, Buffer, Size);
 
   FreePool (ConfigVarList.Name);
   FreePool (ConfigVarList.Data);
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
+  Unit test for GetVarListSize Success.
+
+  @param[in]  Context    [Optional] An optional parameter that enables:
+                         1) test-case reuse with varied parameters and
+                         2) test-case re-entry for Target tests that need a
+                         reboot.  This parameter is a VOID* and it is the
+                         responsibility of the test author to ensure that the
+                         contents are well understood by all test cases that may
+                         consume it.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+GetVarListSizeSuccess (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      NameSize = 20;
+  UINT32      DataSize = 300;
+  UINT32      VarListSize;
+  UINT32      Size;
+
+  Size = NameSize + DataSize + sizeof (CONFIG_VAR_LIST_HDR) + sizeof (UINT32) + sizeof (UINT32) + sizeof (EFI_GUID);
+
+  Status = GetVarListSize (NameSize, DataSize, &VarListSize);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (Size, VarListSize);
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
+  Unit test for GetVarListSize Invalid Param.
+
+  @param[in]  Context    [Optional] An optional parameter that enables:
+                         1) test-case reuse with varied parameters and
+                         2) test-case re-entry for Target tests that need a
+                         reboot.  This parameter is a VOID* and it is the
+                         responsibility of the test author to ensure that the
+                         contents are well understood by all test cases that may
+                         consume it.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+GetVarListSizeInvalidParam (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      NameSize = 20;
+  UINT32      DataSize = 300;
+
+  Status = GetVarListSize (NameSize, DataSize, NULL);
+  UT_ASSERT_STATUS_EQUAL (Status, EFI_INVALID_PARAMETER);
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
+  Unit test for GetVarListSize Overflow.
+
+  @param[in]  Context    [Optional] An optional parameter that enables:
+                         1) test-case reuse with varied parameters and
+                         2) test-case re-entry for Target tests that need a
+                         reboot.  This parameter is a VOID* and it is the
+                         responsibility of the test author to ensure that the
+                         contents are well understood by all test cases that may
+                         consume it.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+**/
+UNIT_TEST_STATUS
+EFIAPI
+GetVarListSizeOverflow (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      NameSize = 5;
+  UINT32      DataSize = MAX_UINT32;
+  UINT32      VarListSize;
+
+  Status = GetVarListSize (NameSize, DataSize, &VarListSize);
+  UT_ASSERT_STATUS_EQUAL (Status, EFI_BUFFER_TOO_SMALL);
 
   return UNIT_TEST_PASSED;
 }
@@ -1093,6 +1217,11 @@ UnitTestingEntry (
   // Var entry & var list composite
   AddTestCase (ConfigVariableListLib, "VariableEntry loop back should succeed", "VariableEntryLoopBack", VariableEntryLoopBack, NULL, NULL, NULL);
   AddTestCase (ConfigVariableListLib, "VariableList loop back should succeed", "VariableListLoopBack", VariableListLoopBack, NULL, NULL, NULL);
+
+  // Test GetVarListSize
+  AddTestCase (ConfigVariableListLib, "Good params should succeed", "GetVarListSizeSuccess", GetVarListSizeSuccess, NULL, NULL, NULL);
+  AddTestCase (ConfigVariableListLib, "Bad params should fail", "GetVarListSizeInvalidParam", GetVarListSizeInvalidParam, NULL, NULL, NULL);
+  AddTestCase (ConfigVariableListLib, "Big inputs should overflow", "GetVarListSizeOverflow", GetVarListSizeOverflow, NULL, NULL, NULL);
 
   //
   // Execute the tests.

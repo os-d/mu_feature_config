@@ -12,9 +12,6 @@
 // Maximum variable length accepted for this library, in bytes.
 #define CONF_VAR_NAME_LEN  0x80
 
-// Needed size for the variable list, given name size (in bytes including NULL terminator) and data size.
-#define VAR_LIST_SIZE(NameSize, DataSize)  (sizeof (CONFIG_VAR_LIST_HDR) + (NameSize) + (DataSize) + sizeof (EFI_GUID) + sizeof (UINT32) + sizeof (UINT32))
-
 /*
  * Internal struct for variable list entries
  */
@@ -48,6 +45,25 @@ typedef struct {
    */
 } CONFIG_VAR_LIST_HDR;
 #pragma pack(pop)
+
+/**
+  Return the size of the variable list given a NameSize (including null terminator) and DataSize
+
+  @param[in]  NameSize    Size in bytes of the CHAR16 name of the config knob including null terminator
+  @param[in]  DataSize    Size in bytes of the Data of the config knob
+  @param[out] NeededSize  Size in bytes of the variable list based on these inputs. Unchanged if not EFI_SUCCESS returned.
+
+  @retval EFI_INVALID_PARAMETER NeededSize was null
+  @retval EFI_BUFFER_TOO_SMALL  Overflow occurred on addition
+  @retval EFI_SUCCESS           NeededSize contains the variable list size
+**/
+EFI_STATUS
+EFIAPI
+GetVarListSize (
+  IN  UINT32  NameSize,
+  IN  UINT32  DataSize,
+  OUT UINT32  *NeededSize
+  );
 
 /**
   Find all active configuration variables for this platform.

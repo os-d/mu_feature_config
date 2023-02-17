@@ -33,3 +33,4 @@
   BaseMemoryLib
   DebugLib
   UnitTestLib
+  SafeIntLib

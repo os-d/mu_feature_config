@@ -14,6 +14,48 @@
 #include <Library/DxeServicesLib.h>
 #include <Library/PcdLib.h>
 #include <Library/ConfigVariableListLib.h>
+#include <Library/SafeIntLib.h>
+
+/**
+  Return the size of the variable list given a NameSize (including null terminator) and DataSize
+
+  @param[in]  NameSize    Size in bytes of the CHAR16 name of the config knob including null terminator
+  @param[in]  DataSize    Size in bytes of the Data of the config knob
+  @param[out] NeededSize  Size in bytes of the variable list based on these inputs. Unchanged if not EFI_SUCCESS returned.
+
+  @retval EFI_INVALID_PARAMETER NeededSize was null
+  @retval EFI_BUFFER_TOO_SMALL  Overflow occurred on addition
+  @retval EFI_SUCCESS           NeededSize contains the variable list size
+**/
+EFI_STATUS
+EFIAPI
+GetVarListSize (
+  IN  UINT32  NameSize,
+  IN  UINT32  DataSize,
+  OUT UINT32  *NeededSize
+  )
+{
+  UINT32         CalculatedSize = sizeof (CONFIG_VAR_LIST_HDR) + sizeof (EFI_GUID) + sizeof (UINT32) + sizeof (UINT32);
+  RETURN_STATUS  Status;
+
+  if (NeededSize == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = SafeUint32Add (CalculatedSize, NameSize, &CalculatedSize);
+  if (RETURN_ERROR (Status)) {
+    return (EFI_STATUS)Status;
+  }
+
+  Status = SafeUint32Add (CalculatedSize, DataSize, &CalculatedSize);
+  if (RETURN_ERROR (Status)) {
+    return (EFI_STATUS)Status;
+  }
+
+  *NeededSize = CalculatedSize;
+
+  return EFI_SUCCESS;
+}
 
 /**
   Helper function to convert variable list to variable entry.
@@ -66,20 +108,32 @@ ConvertVariableListToVariableEntry (
   }
 
   // index into variable list
-  BinSize    = *Size;
-  VarList    = (CONST CONFIG_VAR_LIST_HDR *)((CHAR8 *)VariableListBuffer);
-  NeededSize = VAR_LIST_SIZE (VarList->NameSize, VarList->DataSize);
+  BinSize = *Size;
+  VarList = (CONST CONFIG_VAR_LIST_HDR *)((CHAR8 *)VariableListBuffer);
+  Status  = GetVarListSize (VarList->NameSize, VarList->DataSize, &NeededSize);
 
-  if (NeededSize > BinSize) {
+  if (EFI_ERROR (Status)) {
+    // we overflowed
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a VarList size overflowed, too large of config! NameSize: 0x%x DataSize: 0x%x\n",
+      __FUNCTION__,
+      VarList->NameSize,
+      VarList->DataSize
+      ));
+    goto Exit;
+  }
+
+  if ((UINTN)NeededSize > BinSize) {
     // the NameSize and DataInBinSize have bad values and are pushing us past the end of the binary
     DEBUG ((DEBUG_ERROR, "%a VarList buffer does not have needed size (actual: %x, expected: %x)\n", __FUNCTION__, BinSize, NeededSize));
-    *Size  = NeededSize;
+    *Size  = (UINTN)NeededSize;
     Status = EFI_BUFFER_TOO_SMALL;
     goto Exit;
   }
 
   // Use this as stub to indicate how much buffer used.
-  *Size = NeededSize;
+  *Size = (UINTN)NeededSize;
 
   /*
     * Var List is in DmpStore format:
@@ -168,8 +222,8 @@ ConvertVariableEntryToVariableList (
   )
 {
   EFI_STATUS  Status;
-  UINTN       NameSize;
-  UINTN       NeededSize;
+  UINT32      NameSize;
+  UINT32      NeededSize;
   UINTN       Offset;
   UINT32      Crc32;
 
@@ -185,13 +239,18 @@ ConvertVariableEntryToVariableList (
     goto Exit;
   }
 
-  NameSize = StrnSizeS (VariableEntry->Name, CONF_VAR_NAME_LEN);
+  NameSize = (UINT32)StrnSizeS (VariableEntry->Name, CONF_VAR_NAME_LEN);
+  Status = GetVarListSize (NameSize, VariableEntry->DataSize, &NeededSize);
 
-  NeededSize = VAR_LIST_SIZE (NameSize, VariableEntry->DataSize);
+  if (EFI_ERROR (Status)) {
+    // overflowed...
+    DEBUG ((DEBUG_ERROR, "%a VarList size overflowed, too large of config!\n", __FUNCTION__));
+    goto Exit;
+  }
 
-  if (*Size < NeededSize) {
+  if (*Size < (UINTN)NeededSize) {
     Status = EFI_BUFFER_TOO_SMALL;
-    *Size  = NeededSize;
+    *Size  = (UINTN)NeededSize;
     goto Exit;
   }
 
@@ -222,11 +281,11 @@ ConvertVariableEntryToVariableList (
   CopyMem ((UINT8 *)(VariableListBuffer) + Offset, &Crc32, sizeof (UINT32));
   Offset += sizeof (UINT32);
 
-  *Size = NeededSize;
+  *Size = (UINTN)NeededSize;
 
   // They should still match in size...
-  if (Offset != NeededSize) {
-    ASSERT (Offset == NeededSize);
+  if (Offset != (UINTN)NeededSize) {
+    ASSERT (Offset == (UINTN)NeededSize);
     Status = EFI_COMPROMISED_DATA;
     goto Exit;
   }
