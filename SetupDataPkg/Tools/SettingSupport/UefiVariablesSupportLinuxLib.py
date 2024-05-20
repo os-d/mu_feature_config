@@ -109,6 +109,10 @@ class UefiVariable(object):
             print (type(bytearray(guid)))
             print (type(int))
             print (type(name))
+            val = 0
+            val = val + sys.getsizeof(int)
+            val = val + sys.getsizeof(name)
+            val = val + sys.getsizeof(bytearray(guid))
             efi_var_names[offset] = struct.pack('=I', sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(bytearray(guid)))
             offset += sys.getsizeof(int)
 
