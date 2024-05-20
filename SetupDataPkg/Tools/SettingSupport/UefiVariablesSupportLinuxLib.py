@@ -124,6 +124,8 @@ class UefiVariable(object):
             print (offset)
             print (name)
 
+            break
+
         return (status, efi_var_names)
 
     #
