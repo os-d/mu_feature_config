@@ -103,7 +103,7 @@ class UefiVariable(object):
 
             # the other part is the name
             name = '-'.join(split_string[:-5])
-            name = name.encode('utf-16')
+            name = name.encode('utf-16-le')
             name_len = len(name)
 
             print (offset)
