@@ -95,7 +95,7 @@ def main():
                     # This is the end... But we still need to go through the last loop
                     next_offset = len(efi_var_names) - offset
                 namespace = uuid.UUID(bytes_le=efi_var_names[offset + int_size: offset + int_size + UUID_BYTES_SIZE])
-                name = efi_var_names[offset + int_size + UUID_BYTES_SIZE: offset + next_offset].decode('utf16-le')
+                name = efi_var_names[offset + int_size + UUID_BYTES_SIZE: offset + next_offset].decode('utf16')
                 ret += read_variable_into_variable_list(UefiVar, name, namespace)
                 offset += next_offset
         else:
