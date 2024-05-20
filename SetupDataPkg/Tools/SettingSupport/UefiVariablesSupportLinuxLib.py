@@ -125,8 +125,6 @@ class UefiVariable(object):
             print (name)
             print (efi_var_names.raw)
 
-            break
-
         return (status, efi_var_names)
 
     #
