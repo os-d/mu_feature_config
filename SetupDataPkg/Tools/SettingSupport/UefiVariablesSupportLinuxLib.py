@@ -109,7 +109,7 @@ class UefiVariable(object):
             print (offset)
 
             # NextEntryOffset
-            struct.pack_into('<I', efi_var_names, offset, sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
+            struct.pack_into('<I', efi_var_names, offset, 4 + 16 + name_len)
             offset += 4
             print (offset)
 
