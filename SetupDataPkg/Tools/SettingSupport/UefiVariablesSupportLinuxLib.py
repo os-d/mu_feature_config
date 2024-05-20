@@ -78,11 +78,11 @@ class UefiVariable(object):
 
         # implementation borrowed from https://github.com/awslabs/python-uefivars/blob/main/pyuefivars/efivarfs.py
         path = '/sys/firmware/efi/efivars'
-        # if not os.path.exists(path):
-        #     status = UefiVariable.ERROR_ENVVAR_NOT_FOUND
-        #     return (status, None)
+        if not os.path.exists(path):
+            status = UefiVariable.ERROR_ENVVAR_NOT_FOUND
+            return (status, None)
 
-        vars = []
+        vars = os.listdir(path)
 
         # get the total buffer length, converting to unicode
         length = 0
