@@ -78,11 +78,11 @@ class UefiVariable(object):
 
         # implementation borrowed from https://github.com/awslabs/python-uefivars/blob/main/pyuefivars/efivarfs.py
         path = '/sys/firmware/efi/efivars'
-        if not os.path.exists(path):
-            status = UefiVariable.ERROR_ENVVAR_NOT_FOUND
-            return (status, None)
+        # if not os.path.exists(path):
+        #     status = UefiVariable.ERROR_ENVVAR_NOT_FOUND
+        #     return (status, None)
 
-        vars = os.listdir(path)
+        vars = []
 
         # get the total buffer length, converting to unicode
         length = 0
@@ -106,11 +106,11 @@ class UefiVariable(object):
             name = name.encode('utf-16')
 
             # NextEntryOffset
-            efi_var_names[offset] = struct.pack('=I', sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
+            struct.pack_into('=I', efi_var_names, offset, sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
             offset += sys.getsizeof(int)
 
             # VendorGuid
-            efi_var_names[offset] = struct.packed('=s', guid.toString())
+            struct.pack_into('=s', efi_var_names, offset, guid.toString())
             offset += sys.getsizeof(bytearray(guid))
 
             # Name
