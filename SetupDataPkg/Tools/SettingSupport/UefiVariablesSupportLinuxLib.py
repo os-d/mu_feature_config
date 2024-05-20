@@ -104,20 +104,23 @@ class UefiVariable(object):
             # the other part is the name
             name = '-'.join(split_string[:-5])
             name = name.encode('utf-16')
+            name_len = len(name)
+
+            print (offset)
 
             # NextEntryOffset
             struct.pack_into('<I', efi_var_names, offset, sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
-            offset += sys.getsizeof(int)
+            offset += 4
             print (offset)
 
             # VendorGuid
-            struct.pack_into(f'={sys.getsizeof(guid)}s', efi_var_names, offset, guid)
-            offset += sys.getsizeof(guid)
+            struct.pack_into('=16s', efi_var_names, offset, guid)
+            offset += 16
             print (offset)
 
             # Name
-            struct.pack_into(f'={sys.getsizeof(name)}s', efi_var_names, offset, name)
-            offset += sys.getsizeof(name)
+            struct.pack_into(f'={name_len}s', efi_var_names, offset, name)
+            offset += name_len
             print (offset)
             print (name)
 
