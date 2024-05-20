@@ -108,14 +108,18 @@ class UefiVariable(object):
             # NextEntryOffset
             struct.pack_into('<I', efi_var_names, offset, sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
             offset += sys.getsizeof(int)
+            print (offset)
 
             # VendorGuid
             struct.pack_into(f'={sys.getsizeof(guid)}s', efi_var_names, offset, guid)
             offset += sys.getsizeof(guid)
+            print (offset)
 
             # Name
             struct.pack_into(f'={sys.getsizeof(name)}s', efi_var_names, offset, name)
             offset += sys.getsizeof(name)
+            print (offset)
+            print (name)
 
         return (status, efi_var_names)
 
