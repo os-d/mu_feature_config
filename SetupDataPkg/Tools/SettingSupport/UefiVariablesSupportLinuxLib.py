@@ -106,7 +106,7 @@ class UefiVariable(object):
             name = name.encode('utf-16')
 
             # NextEntryOffset
-            efi_var_names[offset:(offset + sys.getsizeof(int))] = struct.pack('=I', sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(bytearray(guid)))
+            efi_var_names[offset] = struct.pack('=I', sys.getsizeof(int) + sys.getsizeof(name) + sys.getsizeof(guid))
             offset += sys.getsizeof(int)
 
             # VendorGuid
