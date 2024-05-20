@@ -103,7 +103,7 @@ class UefiVariable(object):
 
             # the other part is the name
             name = '-'.join(split_string[:-5])
-            name = name.encode('utf-16-le')
+            name = name.encode('utf-16-be')
             name_len = len(name)
 
             print (offset)
@@ -124,6 +124,8 @@ class UefiVariable(object):
             print (offset)
             print (name)
             print (efi_var_names.raw)
+
+            break
 
         return (status, efi_var_names)
 
