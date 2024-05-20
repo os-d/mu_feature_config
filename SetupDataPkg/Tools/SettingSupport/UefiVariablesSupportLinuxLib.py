@@ -54,13 +54,13 @@ class UefiVariable(object):
 
         if not os.path.exists(path):
             err = UefiVariable.ERROR_ENVVAR_NOT_FOUND
-            return (err, None, None)
+            return (err, None)
 
         efi_var = create_string_buffer(EFI_VAR_MAX_BUFFER_SIZE)
         with open(path, 'rb') as fd:
             efi_var = fd.read()
 
-        return (err, efi_var, None)
+        return (err, efi_var)
 
     #
     # Function to get all variable names
