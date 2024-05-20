@@ -110,8 +110,8 @@ class UefiVariable(object):
             offset += sys.getsizeof(int)
 
             # VendorGuid
-            struct.pack_into('=s', efi_var_names, offset, guid)
-            offset += sys.getsizeof(guid)
+            struct.pack_into('16B', efi_var_names, offset, guid)
+            offset += 16
 
             # Name
             struct.pack_into('=s', efi_var_names, offset, name)
