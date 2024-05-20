@@ -80,7 +80,7 @@ class UefiVariable(object):
         path = '/sys/firmware/efi/efivars'
         if not os.path.exists(path):
             status = UefiVariable.ERROR_ENVVAR_NOT_FOUND
-            return (status, None, None)
+            return (status, None)
 
         vars = os.listdir(path)
 
