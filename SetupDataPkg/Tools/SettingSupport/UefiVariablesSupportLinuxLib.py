@@ -117,7 +117,7 @@ class UefiVariable(object):
             efi_var_names[offset] = name
             offset += sys.getsizeof(name)
 
-        return (status, efi_var_names, None)
+        return (status, efi_var_names)
 
     #
     # Function to set variable
