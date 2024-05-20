@@ -114,7 +114,7 @@ class UefiVariable(object):
             offset += sys.getsizeof(guid)
 
             # Name
-            efi_var_names[offset] = name
+            struct.pack_into('=s', efi_var_names, offset, name)
             offset += sys.getsizeof(name)
 
         return (status, efi_var_names)
