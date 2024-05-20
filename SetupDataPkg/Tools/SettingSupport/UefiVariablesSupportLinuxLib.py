@@ -123,6 +123,7 @@ class UefiVariable(object):
             offset += name_len
             print (offset)
             print (name)
+            print (efi_var_names.raw)
 
             break
 
