@@ -132,7 +132,8 @@ class UefiVariable(object):
         var_len = 0
         success = 0  # Fail
 
-        path = '/sys/firmware/efi/efivars/' + name + '-' + str(guid)
+        # There is a null terminator at the end of the name
+        path = '/sys/firmware/efi/efivars/' + name[:-1] + '-' + str(guid)
         if var is None:
             # we are deleting the variable
             if (os.path.exists(path)):
@@ -145,11 +146,11 @@ class UefiVariable(object):
         if attrs is None:
             attrs = 0x7
 
-        a = ':'.join(hex(ord(x))[2:] for x in path)
-        print(a)
-        os.system('sudo chattr -i ' + path)
+        # if the file exists, remove the immutable flag
+        if (os.path.exists(path)):
+            os.system('sudo chattr -i ' + path)
 
-        with open (path, 'wb') as fd:
+        with open(path, 'wb') as fd:
             # var data is attribute (UINT32) followed by data
             packed = struct.pack('=I', attrs)
             packed += var
