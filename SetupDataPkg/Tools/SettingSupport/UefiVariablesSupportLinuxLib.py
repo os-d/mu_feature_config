@@ -145,11 +145,12 @@ class UefiVariable(object):
         if attrs is None:
             attrs = 0x7
 
-        packed = struct.pack('<I', attrs)
-        packed += var
+        os.system('chattr -i ' + path)
 
-        cmd = 'printf "' + str(packed) + '" > ' + path
-        print (cmd)
-        os.system(cmd)
+        with open (path, 'wb') as fd:
+            # var data is attribute (UINT32) followed by data
+            packed = struct.pack('=I', attrs)
+            packed += var
+            fd.write(packed)
 
         return 1
