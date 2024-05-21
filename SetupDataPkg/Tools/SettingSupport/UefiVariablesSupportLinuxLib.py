@@ -88,9 +88,14 @@ class UefiVariable(object):
         length = 0
         offset = 0
         for var in vars:
-            length += sys.getsizeof(int) + (sys.getsizeof(var.encode('utf-16')))
+            split_string = var.split('-')
+            name = '-'.join(split_string[:-5])
+            name = name.encode('utf-16-le')
+            name_len = len(name)
+            length += (4 + 16 + name_len)
 
         efi_var_names = create_string_buffer(length)
+        print (length)
 
         for var in vars:
             # efivarfs stores vars as NAME-GUID
@@ -103,7 +108,7 @@ class UefiVariable(object):
 
             # the other part is the name
             name = '-'.join(split_string[:-5])
-            name = name.encode('utf-16-be')
+            name = name.encode('utf-16-le')
             name_len = len(name)
 
             print (offset)
