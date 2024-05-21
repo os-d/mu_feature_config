@@ -148,8 +148,7 @@ class UefiVariable(object):
         packed = struct.pack('<I', attrs)
         packed += var
 
-        cmd = 'printf "' + packed + '" > ' + path
-        print (cmd)
+        cmd = 'printf "' + str(packed) + '" > ' + path
         os.system(cmd)
 
         return 1
