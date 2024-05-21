@@ -149,6 +149,7 @@ class UefiVariable(object):
         packed += var
 
         cmd = 'printf "' + str(packed) + '" > ' + path
+        print (cmd)
         os.system(cmd)
 
         return 1
