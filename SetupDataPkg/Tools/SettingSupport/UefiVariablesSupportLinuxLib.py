@@ -131,8 +131,7 @@ class UefiVariable(object):
     def SetUefiVar(self, name, guid, var=None, attrs=None):
         var_len = 0
         success = 0  # Fail
-        print (name)
-        print (guid)
+
         path = '/sys/firmware/efi/efivars/' + name + '-' + str(guid)
         if var is None:
             # we are deleting the variable
@@ -145,11 +144,11 @@ class UefiVariable(object):
 
         if attrs is None:
             attrs = 0x7
-        print (path)
-        with open (path, 'wb') as fd:
-            # var data is attribute (UINT32) followed by data
-            packed = struct.pack('=I', attrs)
-            packed += var
-            fd.write(packed)
+
+        packed = struct.pack('<I', attrs)
+        packed += var
+
+        cmd = 'printf "' + packed.hex() + '" > ' + path
+        os.system(cmd)
 
         return 1
