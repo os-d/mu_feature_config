@@ -131,6 +131,8 @@ class UefiVariable(object):
     def SetUefiVar(self, name, guid, var=None, attrs=None):
         var_len = 0
         success = 0  # Fail
+        print (name)
+        print (guid)
         path = '/sys/firmware/efi/efivars/' + name + '-' + str(guid)
         if var is None:
             # we are deleting the variable
