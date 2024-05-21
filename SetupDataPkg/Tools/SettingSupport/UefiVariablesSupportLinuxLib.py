@@ -95,7 +95,6 @@ class UefiVariable(object):
             length += (4 + 16 + name_len)
 
         efi_var_names = create_string_buffer(length)
-        print (length)
 
         for var in vars:
             # efivarfs stores vars as NAME-GUID
@@ -111,26 +110,17 @@ class UefiVariable(object):
             name = name.encode('utf-16-le')
             name_len = len(name)
 
-            print (offset)
-
             # NextEntryOffset
             struct.pack_into('<I', efi_var_names, offset, 4 + 16 + name_len)
             offset += 4
-            print (offset)
 
             # VendorGuid
             struct.pack_into('=16s', efi_var_names, offset, guid)
             offset += 16
-            print (offset)
 
             # Name
             struct.pack_into(f'={name_len}s', efi_var_names, offset, name)
             offset += name_len
-            print (offset)
-            print (name)
-            print (efi_var_names.raw)
-
-            break
 
         return (status, efi_var_names)
 
