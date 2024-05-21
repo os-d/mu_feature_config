@@ -145,7 +145,9 @@ class UefiVariable(object):
         if attrs is None:
             attrs = 0x7
 
-        os.system('chattr -i ' + path)
+        a = ':'.join(hex(ord(x))[2:] for x in path)
+        print(a)
+        os.system('sudo chattr -i ' + path)
 
         with open (path, 'wb') as fd:
             # var data is attribute (UINT32) followed by data
